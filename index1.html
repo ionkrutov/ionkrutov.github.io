@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>MathJax example</title>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [
+          ['$', '$'],
+          ['\\(', '\\)']
+        ]
+      }
+    };
+  </script>
+</head>
+
+<body>
+  <p>
+    When \(a \ne 0\), there are two solutions to \(ax^2 + bx + c = 0\) and they are
+    \[x = {-b \pm \sqrt{b^2-4ac} \over 2a}.\]
+
+    $c^2 = a^2 + b^2$
+  </p>
+  <p id="formula1">
+    \[x = {-b \pm \sqrt{b^2-4ac} \over 2a}.\]
+  </p>
+  <label for="inputN">Размер матрицы NxN:</label>
+  <br>
+  <input type="number" id="inputN" value="2" , onchange="numberChanged();">
+
+
+  <script>
+    function generateRandomMatrix(rows, cols, minValue = -10, maxValue = 10) {
+      const matrix = [];
+      for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < cols; j++) {
+          // Generate a random number between minValue and maxValue
+          const randomNum = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+          row.push(randomNum);
+        }
+        matrix.push(row);
+      }
+
+      return matrix;
+    }
+
+    function multiplyMatrices(matrixA, matrixB) {
+      const rowsA = matrixA.length;
+      const colsA = matrixA[0].length;
+      const rowsB = matrixB.length;
+      const colsB = matrixB[0].length;
+
+      // Ensure the matrices can be multiplied (columns in A must equal rows in B)
+      if (colsA !== rowsB) {
+        throw new Error('Number of columns in Matrix A must equal number of rows in Matrix B');
+      }
+
+      // Initialize the result matrix with zeros
+      const result = Array.from({ length: rowsA }, () => Array(colsB).fill(0));
+
+      // Perform the matrix multiplication
+      for (let i = 0; i < rowsA; i++) {
+        for (let j = 0; j < colsB; j++) {
+          for (let k = 0; k < colsA; k++) {
+            result[i][j] += matrixA[i][k] * matrixB[k][j];
+          }
+        }
+      }
+
+      return result;
+    }
+
+    function matrixToLatex(matrix, maxSize = 7) {
+      const numRows = matrix.length;
+      const numCols = matrix[0].length;
+
+      let latex = '\\begin{bmatrix}';
+
+      for (let i = 0; i < Math.min(numRows, maxSize); i++) {
+          if (numCols > maxSize) {
+              // Truncate columns and add ellipsis
+              const row = matrix[i].slice(0, maxSize).join(' & ') + ' & \\cdots';
+              latex += row + ' \\\\ ';
+          } else {
+              latex += matrix[i].join(' & ') + ' \\\\ ';
+          }
+      }
+
+      if (numRows > maxSize) {
+          // Add row ellipsis
+          const ellipsisRow = ' \\vdots ' + ('& \\quad ').repeat(Math.min(numCols, maxSize) - 1);
+          if (numCols > maxSize) {
+              latex += ellipsisRow + '& \\ddots';
+          } else {
+              latex += ellipsisRow;
+          }
+      }
+
+      latex += '\\end{bmatrix}';
+      return latex;
+  }
+
+    async function numberChanged() {
+      let node = document.getElementById('input');
+      let n = document.getElementById('inputN').value;
+      if (n < 2) {
+        n = 2;
+        document.getElementById('inputN').value = n;
+      } else if (n > 100000) {
+        n = 100000;
+        document.getElementById('inputN').value = n;
+      }
+
+      console.log('numberChanged');
+      document.getElementById('inputN').setAttribute('disable', true);
+      document.getElementById('inputN').setAttribute('disable', false);
+
+      let matrix1 = generateRandomMatrix(n, n);
+      let matrix2 = generateRandomMatrix(n, n);
+      latex_m1 = matrixToLatex(matrix1);
+      latex_m2 = matrixToLatex(matrix2);
+      matrix_result = multiplyMatrices(matrix1, matrix2);
+      latex_result = matrixToLatex(matrix_result);
+
+      all_latex = `$$${latex_m1} \\times ${latex_m2} = ${latex_result}$$`;
+      await changeFormula(all_latex);
+      console.log(all_latex);
+
+    }
+  </script>
+
+  <script>
+    async function changeFormula(latex_m1) {
+      const node = document.getElementById('formula1');
+      let rand = Math.random();
+      <!-- newFormula = `$$a + b = ${rand}$$`; -->
+      MathJax.typesetClear([node]);
+      node.innerHTML = latex_m1;
+      await MathJax.typesetPromise([node]).then(() => {
+        console.log('New content has been typeset');
+        // the new content is has been typeset
+      });
+    }
+
+  </script>
+
+  <button onclick=changeFormula()>Change formula</button>
+
+</body>
+
+
+</html>
