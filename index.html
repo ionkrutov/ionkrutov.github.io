@@ -1,10 +1,179 @@
 <!DOCTYPE html>
 <html>
+
 <head>
-    <meta charset="utf-8">
-    <title>Diet</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width">
+  <title>Перемножение матриц</title>
+  <style>
+    h1 {
+      color: rgb(255, 89, 0);
+      text-align: center;
+    }
+
+    p {
+      text-align: center;
+    }
+  </style>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js">
+  </script>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [
+          ['$', '$'],
+          ['\\(', '\\)']
+        ]
+      }
+    };
+  </script>
 </head>
+
 <body>
-    <h1>Diet!!!</h1>
+  <h1>
+    Перемножение матриц.
+  </h1>
+
+
+  <label for="inputN">Размер матрицы NxN:</label>
+  <input type="number" id="inputN" value="2" , onchange="numberChanged();">
+  <button onclick="numberChanged();">Старт</button>
+  <br>
+
+  <p id="elapsed_time" , style="text-align: left;">T = 0</p>
+
+  <p id="formula1">
+    $$ \begin{bmatrix} 1 & 2 \\ 3 & 4 \end{bmatrix} \times
+    \begin{bmatrix} 5 & 6 \\ 7 & 8 \end{bmatrix} =
+    \begin{bmatrix} 1 \cdot 5 + 2 \cdot 7 & 1\cdot6 + 2\cdot8 \\
+    3 \cdot 5 + 4 \cdot 7 & 3 \cdot 6 + 4 \cdot 8 \end{bmatrix} =
+    \begin{bmatrix} 19 & 22 \\ 43 & 50 \end{bmatrix}
+    $$
+  </p>
+
+  <script>
+    function generateRandomMatrix(rows, cols, minValue = -10, maxValue = 10) {
+      const matrix = [];
+      for (let i = 0; i < rows; i++) {
+        const row = [];
+        for (let j = 0; j < cols; j++) {
+          // Generate a random number between minValue and maxValue
+          const randomNum = Math.floor(Math.random() * (maxValue - minValue + 1)) + minValue;
+          row.push(randomNum);
+        }
+        matrix.push(row);
+      }
+
+      return matrix;
+    }
+
+    function multiplyMatrices(matrixA, matrixB) {
+      const rowsA = matrixA.length;
+      const colsA = matrixA[0].length;
+      const rowsB = matrixB.length;
+      const colsB = matrixB[0].length;
+
+      // Ensure the matrices can be multiplied (columns in A must equal rows in B)
+      if (colsA !== rowsB) {
+        throw new Error('Number of columns in Matrix A must equal number of rows in Matrix B');
+      }
+
+      // Initialize the result matrix with zeros
+      const result = Array.from({ length: rowsA }, () => Array(colsB).fill(0));
+
+      // Perform the matrix multiplication
+      for (let i = 0; i < rowsA; i++) {
+        for (let j = 0; j < colsB; j++) {
+          for (let k = 0; k < colsA; k++) {
+            result[i][j] += matrixA[i][k] * matrixB[k][j];
+          }
+        }
+      }
+
+      return result;
+    }
+
+    function matrixToLatex(matrix, maxSize = 7) {
+      const numRows = matrix.length;
+      const numCols = matrix[0].length;
+
+      let latex = '\\begin{bmatrix}';
+
+      for (let i = 0; i < Math.min(numRows, maxSize); i++) {
+        if (numCols > maxSize) {
+          // Truncate columns and add ellipsis
+          const row = matrix[i].slice(0, maxSize).join(' & ') + ' & \\cdots';
+          latex += row + ' \\\\ ';
+        } else {
+          latex += matrix[i].join(' & ') + ' \\\\ ';
+        }
+      }
+
+      if (numRows > maxSize) {
+        // Add row ellipsis
+        const ellipsisRow = ' \\vdots ' + ('& \\quad ').repeat(Math.min(numCols, maxSize) - 1);
+        if (numCols > maxSize) {
+          latex += ellipsisRow + '& \\ddots';
+        } else {
+          latex += ellipsisRow;
+        }
+      }
+
+      latex += '\\end{bmatrix}';
+      return latex;
+    }
+
+    async function numberChanged() {
+      let node = document.getElementById('input');
+      let n = document.getElementById('inputN').value;
+      if (n < 2) {
+        n = 2;
+        document.getElementById('inputN').value = n;
+      } else if (n > 100000) {
+        n = 100000;
+        document.getElementById('inputN').value = n;
+      }
+
+      console.log('numberChanged');
+      document.getElementById('inputN').setAttribute('disable', true);
+      document.getElementById('inputN').setAttribute('disable', false);
+
+      let matrix1 = generateRandomMatrix(n, n);
+      let matrix2 = generateRandomMatrix(n, n);
+      latex_m1 = matrixToLatex(matrix1);
+      latex_m2 = matrixToLatex(matrix2);
+
+      latex_result = `$$${latex_m1} \\times ${latex_m2} = ???$$`;
+      await changeFormula(latex_result);
+
+      const tic = performance.now();
+      matrix_result = multiplyMatrices(matrix1, matrix2);
+      const toc = performance.now();
+      const elapsed_time = toc - tic;
+      console.log('Elapsed time:', elapsed_time, tic, toc);
+      document.getElementById('elapsed_time').innerHTML = `T = ${elapsed_time} ms`;
+
+
+      latex_result = matrixToLatex(matrix_result);
+
+      all_latex = `$$${latex_m1} \\times ${latex_m2} = ${latex_result}$$`;
+      await changeFormula(all_latex);
+
+    }
+  </script>
+
+  <script>
+    async function changeFormula(latex_m1) {
+      const node = document.getElementById('formula1');
+      MathJax.typesetClear([node]);
+      node.innerHTML = latex_m1;
+      await MathJax.typesetPromise([node]).then(() => {
+        console.log('New content has been typeset');
+      });
+    }
+
+  </script>
+
 </body>
+
 </html>
